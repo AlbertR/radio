@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+/.vs
+/IoT_Radio/.vs/IoT_Radio/v15
+/IoT_Radio/IoT_Radio/Release
+/IoT_Radio/IoT_Radio/__vm
+/WiFiSetup/.vs/WiFiSetup/v15
+/WiFiSetup/WiFiSetup/Release
+/WiFiSetup/WiFiSetup/__vm
