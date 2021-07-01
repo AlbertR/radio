@@ -7,30 +7,109 @@
 #include <SoftwareSerial.h>
 #include <Wire.h>
 
-// the setup function runs once when you press reset or power the board
+#define analog_CONTROL_PIN 2 // Analog pin A3
+#define BUTTON_PIN 7 
+#define RX 10
+#define TX 11
+
+SoftwareSerial wifi(RX, TX);
+
+int status = 0;
+int max_value;
+int current_value;
+bool BUTTON_PRESSED = false;
+/* 
+0 - Get WIFI IP info
+1 - List WiFi 
+2 - Connect to SSID
+3 - Disconnect from SSID
+4 - 
+
+Each command must have a range depending on 1024/(number of command)
+*/ 
+int current_selected_command = -1;
+
 void setup() {
 	
-	Serial.begin(115200);
-
+	Serial.begin(9600);
+	wifi.begin(115200);
+	pinMode(analog_CONTROL_PIN, INPUT);
+	pinMode(BUTTON_PIN, INPUT);
+	status = 0;
 }
 
-// the loop function runs over and over again until power down or reset
 void loop() {
   
-	char16_t echo;
+	String echo;
 	String command;
+	bool send=false;
+	float control_level;
 
-	if (Serial.available()) {
-		command = Serial.readString();
-		for (int i = 0; i < command.length(); i++) {
-			Serial.write(command[i]);
+	
+	control_level = analogRead(analog_CONTROL_PIN); // Может быть до 1023;
+
+	if ( control_level > 0 && control_level < 246) {
+		if (current_selected_command != 0) {
+			Serial.print("Level ");
+			Serial.println(control_level);
+			Serial.println("Get WIFI IP info");
+			current_selected_command = 0;
+		}
+		if ((digitalRead(BUTTON_PIN) == HIGH) && !BUTTON_PRESSED) {
+			SendCommand("0");
+			BUTTON_PRESSED = true;
+		}
+	}
+	else if (control_level > 267 && control_level < 502) {
+		if (current_selected_command != 1) {
+			Serial.print("Level ");
+			Serial.println(control_level);
+			Serial.println("List WIFI Stations");
+			current_selected_command = 1;
+		}
+		if ((digitalRead(BUTTON_PIN) == HIGH) && !BUTTON_PRESSED) {
+			SendCommand("1");
+			BUTTON_PRESSED = true;
+		}
+	}
+	else if (control_level > 523 && control_level < 758) {
+		if (current_selected_command != 2) {
+			Serial.print("Level ");
+			Serial.println(control_level);
+			Serial.println("Connect to SSID");
+			current_selected_command = 2;
+		}
+		if ((digitalRead(BUTTON_PIN) == HIGH) && !BUTTON_PRESSED) {
+			SendCommand("2");
+			BUTTON_PRESSED = true;
+		}
+	}
+	else if (control_level > 779 && control_level < 1023) {
+		if (current_selected_command != 3) {
+			Serial.print("Level ");
+			Serial.println(control_level);
+			Serial.println("Disconnect from SSID");
+			current_selected_command = 3;
+		}
+		if ((digitalRead(BUTTON_PIN) == HIGH) && !BUTTON_PRESSED) {
+			SendCommand("3");
+			BUTTON_PRESSED = true;
 		}
 	}
 
-	delay(1000);
-
-	while (Serial.available()) {
-		Serial.println(Serial.read());
+	if (digitalRead(BUTTON_PIN) == LOW) {
+		BUTTON_PRESSED = false;
 	}
 
+	while (wifi.available()) {
+		echo = wifi.readString();
+		Serial.println(echo);
+	}
+
+}
+
+void SendCommand(char *command) {
+
+	Serial.println(command);
+	wifi.print(command);
 }
